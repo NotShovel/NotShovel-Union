@@ -99,10 +99,6 @@ export default {
     this.member_name = sessionStorage.getItem("member_name");
   },
 
-  beforeMount() {
-   
-  },
-
   mounted() {
     const list = axios.get('/api/chat/list',{
       params: {
@@ -119,10 +115,6 @@ export default {
       .catch((err) => console.log(err));
     console.log(list.data);
 
-
-    
-
-    // alert(this.$props.chatBoardId);
     const boardId = this.$props.chatBoardId;
     // 다른 네트워크 주소로 통신할 경우 url을 변경해줘야함
     const serverUrl = 'http://localhost:3000';

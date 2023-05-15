@@ -2,7 +2,7 @@
   <div class="section" v-bind:class="{ open: props }">
     <!-- 글 작성 -->
     <div class="meeting-form" v-show="isWrite">
-      <MeetingMinuteEditor :isWrite="this.isWrite"></MeetingMinuteEditor>
+      <MeetingMinuteEditor :isWrite="this.isWrite" :post_id="post_id"></MeetingMinuteEditor>
     </div>
     <!-- 글 목록 -->
     <div class="meeting-form" v-show="!isWrite">
@@ -60,23 +60,52 @@
     </div>
   </div>
 </template>
-
 <script>
+import axios from 'axios'
 import meetingMinuteEditor from "@/components/MeetingMinuteEditor.vue"
 
 export default {
   data() {
     return {
       isWrite: false,
+      board_id: null,
+      member_id: null,
+      post_id: null,
     }
   },
   props: ['props'],
   components: {
     MeetingMinuteEditor: meetingMinuteEditor
   },
+  mounted() {
+    this.member_id = sessionStorage.getItem('member_id');
+    this.board_id = sessionStorage.getItem('board_id');
+  }, 
   methods: {
-    goEditor(){
-      this.isWrite=true;
+    async goEditor(){  
+      try {
+        this.isWrite=true;
+        const board_id = this.board_id;
+        const member_id = this.member_id;
+
+        await axios.post('/api/meeting', {
+          board_id,
+          title: null,
+          date: null,
+          context: null,
+          place: null,
+          member_id 
+        })
+        .then((res)=> {
+          console.log(res.data);
+          console.log(res.data.data._id);
+          this.post_id = res.data.data._id;
+          alert(this.post_id);
+          // sessionStorage.setItem('meetingMinuteId', res.data._id);
+        })   
+      } catch (err) {
+        console.error(err);
+      }
     },
     clickSelectBtn: function () {
       const optionMenu = document.querySelector(".select-menu");

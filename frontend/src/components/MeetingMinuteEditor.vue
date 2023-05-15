@@ -16,12 +16,14 @@
         <button type="button" class="btn btn-outline-secondary" @click="goMeetingMinutes()">나가기</button>
       </div>
       <div class="editor-chat">
-        <div class="editor-chat-content">
-          채팅내용
+        <div class="editor-chat-content" ref="chatBox">
+          <li v-for="(log, index) in logs" :key="index">
+            {{log.member_name}}: {{log.context}}
+          </li>
         </div>
         <div class="input-group mb-3">
-        <input type="text" class="form-control" placeholder="채팅" aria-describedby="button-addon2">
-        <button class="btn btn-outline-secondary" type="button" id="button-addon2">전송</button>
+        <input type="text" v-model="context" @keyup.enter="send($event)" class="form-control" placeholder="채팅" aria-describedby="button-addon2">
+        <button class="btn btn-outline-secondary" type="button" id="button-addon2" @click="send">전송</button>
       </div>
     </div>
     </div>
@@ -32,6 +34,7 @@
 import axios from 'axios'
 import { Editor } from '@toast-ui/vue-editor'
 import '@toast-ui/editor/dist/toastui-editor.css' // Editor style
+import io from "socket.io-client";
 
 export default {
   data() {
@@ -42,10 +45,14 @@ export default {
       date: null,
       location: null,
       main: false, 
+      logs: [],
+      context: null,       // input 바인딩,
+      member_name: sessionStorage.getItem('member_name'),
     }
   },
-  props:{
-    isWrite: Boolean
+  props: {
+    isWrite: Boolean,
+    post_id: String,
   },
   components: {
     Editor,
@@ -55,9 +62,49 @@ export default {
     this.board_id = sessionStorage.getItem('board_id');
     this.date = new Date().toISOString().slice(0,10);
 	  window.addEventListener('beforeunload', this.leave);
+
+
+
+    // 채팅 추가
+    
+    const list = axios.get('/api/chat/list',{
+      params: {
+        postId: this.$props.post_id,
+        boardId: this.board_id
+      }
+    })
+      .then((res) => {
+        console.log(res);
+        this.logs = res.data.chattings;
+        this.$nextTick(() => { 
+      // this.$refs.chatBox.scrollTop = this.$refs.chatBox.scrollHeight; 
+    });
+      })
+      .catch((err) => console.log(err));
+    console.log(list.data);
+
+    const postId = this.$props.post_id;
+    // 다른 네트워크 주소로 통신할 경우 url을 변경해줘야함
+    const serverUrl = 'http://localhost:3000';
+    this.socket = io(serverUrl);
+    this.socket.on("welcome", () => {console.log("new member join!")});
+    this.socket.emit("enter_openChat", this.$props.post_id);
+    this.socket.on("new_message", chat => {
+      // console.log(`${chat.msg}`);
+      this.logs.push(chat);
+      this.$nextTick(() => {
+        // 모든 DOM 업데이트가 완료된 후에 실행
+          this.$refs.chatBox.scrollTop = this.$refs.chatBox.scrollHeight;
+        });
+    });
+
   }, 
   beforeUnmount() {
     window.removeEventListener('beforeunload', this.leave);
+    // 채팅 리스너 제거 추가
+    this.socket.off('new_message');
+    this.socket.off("welcome");
+    this.socket.disconnect();
   },
   methods: {
     leave(event) {
@@ -77,7 +124,7 @@ export default {
         const member_id = this.member_id;
 
         await axios.post('/api/meeting', {
-          board_id,
+          board_id: this.board_id,
           title: this.title,
           date: this.date,
           context: this.getContent(),
@@ -106,6 +153,38 @@ export default {
     setContent(content) {
       this.$refs.toastEditor.invoke('setMarkdown', content);
     },
+
+    // 채팅 전송 이벤트 추가
+    send(event) {
+      event.stopPropagation(); // 이벤트 전파를 멈춥니다.
+      if(this.context !== "") {
+        const chat = {
+          boardId: this.board_id,
+          roomName: this.$props.post_id,
+          context: this.context,
+          member_id: sessionStorage.getItem('member_id'),
+          member_name: this.member_name,
+          type: 'normal'
+        }
+      
+        this.socket.emit("new_message", chat, () => {
+          this.logs.push(chat);
+          this.$nextTick(() => {
+          // 모든 DOM 업데이트가 완료된 후에 실행
+            // this.scrollToBottom();
+            this.$refs.chatBox.scrollTop = this.$refs.chatBox.scrollHeight;
+            axios.post('/api/meeting/chat', chat, {
+              params: {
+                postId: this.$props.post_id,
+                boardId: this.board_id
+              }
+            })
+              .then((res) => console.log(res))
+              .catch((err) => console.log(err));
+          });
+      });
+        this.context = "";
+    }}
   },
 }
 </script>

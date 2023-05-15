@@ -18,6 +18,7 @@ const meeting_minutes = new Schema({
             file_name: { type: String}, // req
             file_extension: String, // 확장자 없는 파일 올렸을 때 에러 방지용으로 required설정 x
         },
+        roomName: { type: String }
     }],
 
     // 회의록 내용 - 본문
