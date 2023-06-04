@@ -15,12 +15,13 @@
         >
           <li v-for="(board, index) in propsdata.bList"
             :key="index"
-            @click="clickBoard(board.clickMethod)"
+            
           >
             <a href="#">
               <i v-bind:class="board.icon"></i>
               <!-- <i class='bx bx-folder' ></i> -->
-              <span class="links_name">{{board.board_name}}</span>
+              <span class="links_name" @click="clickBoard(board.clickMethod)">{{board.board_name}}</span>
+              <button @click="deleteBoard(board._id, board.type)">X</button>
             </a>
             <span class="tooltip">{{board.board_name}}</span>
           </li>
@@ -69,7 +70,7 @@
 
         <div class="edit_mode" v-if="editMode">
           <button class="btn btn-outline-light" @click="saveOrder">제출</button>
-          <button class="btn btn-outline-light">취소</button>
+          <button class="btn btn-outline-light" @click="clickEdit">취소</button>
         </div>
       <!-- </div> -->
         <li @click="exitProject()" class="exit-btn">
@@ -167,7 +168,7 @@ export default {
       this.$emit('addBoard');
     },
     clickEdit() {
-      this.editMode = true;
+      this.editMode = !this.editMode;
     },
     saveOrder() {
       let newOrder = [];
@@ -201,6 +202,11 @@ export default {
             alert('알 수 없는 에러');
           }
         })
+    },
+    async deleteBoard(bid, btype) {
+      await axios.delete(`/api/board/${bid}/${btype}`)
+      .then((res) => console.log(res))
+      .catch((err) => console.log(err));
     }
   },
 }
