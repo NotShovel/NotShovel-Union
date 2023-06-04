@@ -37,6 +37,7 @@ module.exports = (app) => {
   app.patch('/api/board/order', boardController.changeBoardOrder);
   app.post('/api/board', boardController.createBoard);
   app.get('/api/board', boardController.getBoardList);
+  app.delete('/api/board/:bid/:btype', boardController.deleteBoard);
   
   // meeting_minutes
   app.post('/api/meeting', meetingController.save);

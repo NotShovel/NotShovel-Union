@@ -161,6 +161,8 @@ exports.createBoard = async (req, res) => {
   console.log(`추가될 순서: ${req.body.listIndex}`);
   const type = req.body.type;
 
+  // console.log(`type: ${type}`);
+
   // 게시판 type에 따라서 저장 되는 model이 바뀜
   switch(type) {
     case 'meetingMinutes':
@@ -175,7 +177,7 @@ exports.createBoard = async (req, res) => {
         console.log(err);
       }
       break;
-    case 'ganttCharts':
+    case 'ganttChart':
       try {
         await gantt_charts.create({
           project_id: req.query.project_id,
@@ -202,4 +204,41 @@ exports.createBoard = async (req, res) => {
       break;
     }
   
+};
+
+exports.deleteBoard = async (req, res) => {
+  // 게시판 타입이랑 아이디만 받아서 삭제
+  const bid = req.params.bid;
+  const type = req.params.btype;
+
+  console.log(type);
+  console.log(bid);
+  switch(type) {
+    case 'meetingMinutes':
+      try {
+        await meeting_minutes.findByIdAndDelete(bid);
+        console.log('삭제성공');
+      } catch(err) {
+        console.log(err);
+      }
+      break;
+    case 'ganttChart':
+      try {
+        await gantt_charts.findByIdAndDelete(bid);
+        console.log('삭제성공');
+      } catch(err) {
+        console.log(err);
+      }
+      break;
+    case 'openChat':
+      try {
+        await chattings.findByIdAndDelete(bid);
+        console.log('삭제성공');
+      } catch(err) {
+        console.log(err);
+      }
+      break;
+  }
+
+  console.log(bid);
 };
