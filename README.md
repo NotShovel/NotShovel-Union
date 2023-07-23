@@ -74,10 +74,9 @@ Git, Github, Github Desktop, Collabee, Discord, AWS, Vercel
 
 <br>
 
-## 📖 실행화면
 
 <details>
-<summary>보기</summary>
+<summary><h2>📖 실행화면</h2></summary>
 <div markdown="1">
 
 
